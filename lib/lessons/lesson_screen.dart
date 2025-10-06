@@ -53,7 +53,7 @@ class _LessonScreenState extends State<LessonScreen> {
           respuestaSeleccionada == _preguntas[preguntaActual].respuestaCorrecta;
 
       if (respuestaCorrecta) {
-        puntos += 10;
+        puntos += 10;        
         _mostrarSnackBar('¡Correcto! +10 puntos', true);
       } else {
         _mostrarSnackBar(

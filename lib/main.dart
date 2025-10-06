@@ -11,13 +11,12 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  // ⚙️ Ejecuta el seeder SOLO si estás en modo desarrollo.
   // Ponlo en true solo cuando quieras subir datos nuevos.
-  const bool ejecutarSeeder = true;
+  // const bool ejecutarSeeder = true;
 
-  if (ejecutarSeeder) {
-    await FirestoreSeeder.subirUnidades();
-  }
+  // if (ejecutarSeeder) {
+  //   await FirestoreSeeder.subirUnidades();
+  // }
 
   runApp(const MyApp());
 }

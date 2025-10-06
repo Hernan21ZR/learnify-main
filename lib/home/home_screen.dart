@@ -450,7 +450,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     : (completada
                           ? Icons.check_rounded
                           : Icons.menu_book_rounded),
-                color: bloqueada ? Colors.grey : colorLeccion,
+                color: bloqueada ? Colors.grey : AppColors.primary,
                 size: 22,
               ),
               const SizedBox(width: 12),
@@ -488,7 +488,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     : (completada
                           ? Icons.verified_rounded
                           : Icons.play_arrow_rounded),
-                color: bloqueada ? Colors.grey : colorLeccion,
+                color: bloqueada ? Colors.grey : AppColors.primary,
                 size: 26,
               ),
             ],
