@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:learnify/models/unit.dart';
 import 'package:learnify/models/lesson.dart';
+import 'package:learnify/screens/friends/friends_screen.dart';
 import 'package:learnify/screens/profile/perfil_screen.dart';
 import 'package:learnify/services/units_service.dart';
 import 'package:learnify/lessons/lesson_screen.dart';
@@ -23,9 +24,6 @@ class _HomeScreenState extends State<HomeScreen> {
   String? _error;
   int _currentIndex = 0;
   UserStats? _userStats;
-
-  // Guardamos el progreso previo para mostrar mensajes solo al cambiar
-  final Map<String, double> _progresoAnterior = {};
 
   @override
   void initState() {
@@ -104,13 +102,18 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         automaticallyImplyLeading: false,
         title: Text(
-          _currentIndex == 0 ? "Mis Unidades" : "Perfil",
+          _currentIndex == 0
+              ? "Mis Unidades"
+              : _currentIndex == 1
+              ? "Amigos"
+              : "Perfil",
           style: const TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 22,
             color: Colors.white,
           ),
         ),
+
         centerTitle: true,
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
@@ -160,6 +163,10 @@ class _HomeScreenState extends State<HomeScreen> {
               label: 'Inicio',
             ),
             BottomNavigationBarItem(
+              icon: Icon(Icons.group_rounded),
+              label: 'Amigos',
+            ),
+            BottomNavigationBarItem(
               icon: Icon(Icons.person_rounded),
               label: 'Perfil',
             ),
@@ -171,6 +178,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _getBodyContent() {
     if (_currentIndex == 1) {
+      return FriendsScreen();
+    } else if (_currentIndex == 2) {
       return PerfilScreen(unidades: _unidades, userStats: _userStats);
     }
 
@@ -249,24 +258,6 @@ class _HomeScreenState extends State<HomeScreen> {
       return Colors.lightGreenAccent;
     }
 
-    // ✅ Mostrar mensaje solo si pasa de <1.0 a 1.0
-    final progresoPrevio = _progresoAnterior[unidad.id] ?? 0.0;
-    if (progreso == 1.0 && progresoPrevio < 1.0 && !bloqueada) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              "¡Unidad $numeroUnidad completada 🎉!",
-              style: const TextStyle(color: Colors.white),
-            ),
-            backgroundColor: baseColor,
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      });
-    }
-    _progresoAnterior[unidad.id] = progreso;
-
     return AnimatedContainer(
       duration: const Duration(milliseconds: 400),
       margin: const EdgeInsets.only(bottom: 18),
@@ -275,11 +266,14 @@ class _HomeScreenState extends State<HomeScreen> {
         gradient: LinearGradient(
           colors: bloqueada
               ? [Colors.grey.shade500, Colors.grey.shade400]
-              : [baseColor.withOpacity(0.9), baseColor.withOpacity(0.75)],
+              : [
+                  baseColor.withValues(alpha: 0.9),
+                  baseColor.withValues(alpha: 0.75),
+                ],
         ),
         boxShadow: [
           BoxShadow(
-            color: baseColor.withOpacity(0.3),
+            color: baseColor.withValues(alpha: 0.3),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -398,100 +392,128 @@ class _HomeScreenState extends State<HomeScreen> {
     final completadas = _userStats?.leccionesCompletadas ?? [];
     final completada = completadas.contains(leccion.id);
 
+    // ✅ Verificar si la lección está bloqueada
     bool bloqueada = false;
-    if (numeroLeccion > 1) {
-      final leccionAnterior = unidad.lecciones[numeroLeccion - 2];
-      if (!completadas.contains(leccionAnterior.id)) bloqueada = true;
+
+    // La primera lección de la primera unidad siempre está desbloqueada
+    if (unidad.orden == 1 && numeroLeccion == 1) {
+      bloqueada = false;
+    } else {
+      // Buscar el índice de la lección actual
+      final indexActual = unidad.lecciones.indexOf(leccion);
+
+      // Si no es la primera lección de la unidad
+      if (indexActual > 0) {
+        final leccionAnterior = unidad.lecciones[indexActual - 1];
+        // Solo desbloquear si la anterior está completada
+        bloqueada = !completadas.contains(leccionAnterior.id);
+      } else {
+        // Si es la primera lección de otra unidad, desbloquear solo si TODA la unidad anterior fue completada
+        final indexUnidad = _unidades.indexOf(unidad);
+        if (indexUnidad > 0) {
+          final unidadAnterior = _unidades[indexUnidad - 1];
+          final todasCompletadas = unidadAnterior.lecciones.every(
+            (l) => completadas.contains(l.id),
+          );
+          bloqueada = !todasCompletadas;
+        }
+      }
     }
 
+    // 🎨 Colores
+    final double intensidad = 0.2 + (numeroLeccion * 0.1);
     final Color colorLeccion = baseColor.withOpacity(
-      (0.2 + (numeroLeccion * 0.1)).clamp(0.3, 0.9),
+      intensidad.clamp(0.3, 0.9),
     );
-    final backgroundColor = bloqueada
+    final Color backgroundColor = completada
+        ? colorLeccion
+        : bloqueada
         ? Colors.grey.shade200
-        : (completada ? colorLeccion : Colors.white);
-    final textColor = bloqueada
+        : Colors.white;
+    final Color borderColor = completada
+        ? colorLeccion
+        : bloqueada
+        ? Colors.grey.shade400
+        : colorLeccion.withOpacity(0.4);
+    final Color textColor = completada
+        ? Colors.white
+        : bloqueada
         ? Colors.grey
-        : (completada ? Colors.white : Colors.black87);
+        : Colors.black87;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        splashColor: colorLeccion.withOpacity(0.25),
-        onTap: bloqueada
-            ? () => ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(
-                    "Completa la lección anterior para desbloquear esta 🚫",
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  backgroundColor: Colors.redAccent,
-                  duration: Duration(seconds: 2),
-                ),
-              )
-            : () => _mostrarDialogoLeccion(leccion, unidad.id, colorLeccion),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 250),
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: backgroundColor,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: colorLeccion.withOpacity(0.5),
-              width: 1.4,
-            ),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                bloqueada
-                    ? Icons.lock_outline_rounded
-                    : (completada
-                          ? Icons.check_rounded
-                          : Icons.menu_book_rounded),
-                color: bloqueada ? Colors.grey : AppColors.primary,
-                size: 22,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Lección $numeroLeccion: ${leccion.titulo}",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: textColor,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          splashColor: bloqueada
+              ? Colors.transparent
+              : colorLeccion.withOpacity(0.25),
+          onTap: bloqueada
+              ? () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text(
+                        'Completa la lección anterior para desbloquear esta.',
                       ),
+                      backgroundColor: Colors.orangeAccent,
+                      duration: const Duration(seconds: 2),
                     ),
-                    if (leccion.descripcion != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4),
-                        child: Text(
-                          leccion.descripcion!,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: bloqueada
-                                ? Colors.grey
-                                : (completada ? Colors.white70 : Colors.grey),
-                          ),
-                        ),
-                      ),
-                  ],
+                  );
+                }
+              : () => _mostrarDialogoLeccion(leccion, unidad.id, colorLeccion),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 250),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: backgroundColor,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: borderColor, width: 1.4),
+              boxShadow: [
+                BoxShadow(
+                  color: colorLeccion.withOpacity(0.25),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
                 ),
-              ),
-              Icon(
-                bloqueada
-                    ? Icons.lock_rounded
-                    : (completada
-                          ? Icons.verified_rounded
-                          : Icons.play_arrow_rounded),
-                color: bloqueada ? Colors.grey : AppColors.primary,
-                size: 26,
-              ),
-            ],
+              ],
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  completada
+                      ? Icons.check_circle_rounded
+                      : bloqueada
+                      ? Icons.lock_rounded
+                      : Icons.menu_book_rounded,
+                  color: completada
+                      ? Colors.white
+                      : bloqueada
+                      ? Colors.grey
+                      : colorLeccion,
+                  size: 24,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    "Lección $numeroLeccion: ${leccion.titulo}",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: textColor,
+                    ),
+                  ),
+                ),
+                if (!bloqueada)
+                  Icon(
+                    completada
+                        ? Icons.verified_rounded
+                        : Icons.play_arrow_rounded,
+                    color: completada ? Colors.white : colorLeccion,
+                    size: 26,
+                  ),
+              ],
+            ),
           ),
         ),
       ),

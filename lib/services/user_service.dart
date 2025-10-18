@@ -12,24 +12,51 @@ class UserService {
     return UserStats.fromMap(doc.data()!);
   }
 
-  /// 🔥 Sumar puntos al usuario actual
   static Future<void> sumarPuntos(int cantidad) async {
     final uid = _auth.currentUser?.uid;
     if (uid == null) return;
-
     await _firestore.collection("users").doc(uid).update({
       "puntos": FieldValue.increment(cantidad),
     });
   }
 
-  /// 🔥 Marcar una lección como completada y dar puntos
-  static Future<void> completarLeccion(String leccionId, int puntos) async {
+  /// Nuevo método: registra el resultado de una lección con puntaje acumulativo
+  static Future<void> registrarResultadoLeccion(
+      String leccionId, int nuevoPuntaje, int totalPreguntas) async {
     final uid = _auth.currentUser?.uid;
     if (uid == null) return;
 
-    await _firestore.collection("users").doc(uid).update({
-      "puntos": FieldValue.increment(puntos),
-      "leccionesCompletadas": FieldValue.arrayUnion([leccionId]),
+    final docRef = _firestore.collection("users").doc(uid);
+    final doc = await docRef.get();
+    if (!doc.exists) return;
+
+    final userData = doc.data()!;
+    final Map<String, dynamic> puntajesLecciones =
+        Map<String, dynamic>.from(userData['puntajesLecciones'] ?? {});
+    final List<dynamic> completadas =
+        List<dynamic>.from(userData['leccionesCompletadas'] ?? []);
+
+    final int puntajePrevio = (puntajesLecciones[leccionId] ?? 0);
+    final int puntajeMaximo = totalPreguntas * 10;
+
+    // El usuario solo puede recuperar los puntos que faltan
+    final int puntosAcumulados =
+        (puntajePrevio + nuevoPuntaje).clamp(0, puntajeMaximo);
+
+    // Calcular porcentaje total
+    final double porcentaje = (puntosAcumulados / puntajeMaximo) * 100;
+
+    // Actualizamos Firestore
+    await docRef.update({
+      "puntajesLecciones.$leccionId": puntosAcumulados,
+      "puntos": FieldValue.increment(puntosAcumulados - puntajePrevio),
     });
+
+    // Si llega al 75%, marcar como completada
+    if (porcentaje >= 75 && !completadas.contains(leccionId)) {
+      await docRef.update({
+        "leccionesCompletadas": FieldValue.arrayUnion([leccionId]),
+      });
+    }
   }
 }

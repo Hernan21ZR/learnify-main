@@ -1,8 +1,10 @@
 import 'dart:math';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:learnify/models/unit.dart';
 import 'package:learnify/models/user_stats.dart';
+import 'package:learnify/screens/friends/following_screen.dart';
 import 'package:learnify/utils/constants.dart';
 
 class PerfilScreen extends StatefulWidget {
@@ -28,6 +30,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
   ];
 
   late String _avatarSeleccionado;
+  bool _isRefreshing = false;
 
   @override
   void initState() {
@@ -35,29 +38,12 @@ class _PerfilScreenState extends State<PerfilScreen> {
     _avatarSeleccionado = _avatars[Random().nextInt(_avatars.length)];
   }
 
-  // 📊 Cálculo del sistema escalonado
+  // 📊 Cálculo de niveles
   Map<String, dynamic> calcularNivel(int puntos) {
-    final niveles = [
-      100,
-      150,
-      200,
-      250,
-      300,
-      400,
-      500,
-      600,
-      700,
-      800,
-      1000,
-      1200,
-      1400,
-      1600,
-      1800,
-    ];
+    final niveles = [100, 150, 200, 250, 300, 400, 500, 600, 700, 800, 1000, 1200, 1400, 1600, 1800];
 
     int nivel = 1;
     int xpAcumulado = 0;
-
     for (int req in niveles) {
       if (puntos >= xpAcumulado + req) {
         xpAcumulado += req;
@@ -76,22 +62,23 @@ class _PerfilScreenState extends State<PerfilScreen> {
     double progresoNivel = xpSiguiente > 0 ? xpActual / xpSiguiente : 0;
 
     String zona;
-    if (nivel <= 5)
-      zona = "Principiante 🟢";
-    else if (nivel <= 10)
-      zona = "Intermedio 🟡";
-    else if (nivel <= 15)
-      zona = "Avanzado 🔵";
-    else
-      zona = "Experto 🔥";
+    if (nivel <= 5) zona = "Principiante 🟢";
+    else if (nivel <= 10) zona = "Intermedio 🟡";
+    else if (nivel <= 15) zona = "Avanzado 🔵";
+    else zona = "Experto 🔥";
 
     return {
       "nivel": nivel,
       "zona": zona,
       "progresoNivel": progresoNivel.clamp(0.0, 1.0),
       "xpRestante": xpRestante,
-      "xpSiguiente": xpSiguiente,
     };
+  }
+
+  Future<void> _recargarPerfil() async {
+    setState(() => _isRefreshing = true);
+    await Future.delayed(const Duration(seconds: 1));
+    setState(() => _isRefreshing = false);
   }
 
   @override
@@ -104,26 +91,25 @@ class _PerfilScreenState extends State<PerfilScreen> {
     }
 
     final unidades = widget.unidades;
-    final totalLecciones = unidades.fold<int>(
-      0,
-      (prev, u) => prev + u.lecciones.length,
-    );
+    final totalLecciones = unidades.fold<int>(0, (prev, u) => prev + u.lecciones.length);
     final completadas = stats.leccionesCompletadas.length;
-    final progresoGlobal = totalLecciones > 0
-        ? completadas / totalLecciones
-        : 0.0;
+    final progresoGlobal = totalLecciones > 0 ? completadas / totalLecciones : 0.0;
     final nivelData = calcularNivel(stats.puntos);
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      physics: const BouncingScrollPhysics(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          _buildHeader(user, stats),
-          const SizedBox(height: 25),
-          _buildMetricasPrincipales(progresoGlobal, stats, nivelData),
-        ],
+    return RefreshIndicator(
+      color: AppColors.primary,
+      onRefresh: _recargarPerfil,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            _buildHeader(user, stats),
+            const SizedBox(height: 25),
+            _buildMetricasPrincipales(progresoGlobal, stats, nivelData),
+          ],
+        ),
       ),
     );
   }
@@ -150,8 +136,49 @@ class _PerfilScreenState extends State<PerfilScreen> {
           ),
         ),
         const SizedBox(height: 4),
-        Text(user?.email ?? "", style: const TextStyle(color: Colors.grey)),
+        Text(
+          user?.email ?? "",
+          style: const TextStyle(color: Colors.grey),
+        ),
         const SizedBox(height: 8),
+
+        // 👥 Contador de seguidos
+        StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('users')
+              .doc(user?.uid)
+              .collection('following')
+              .snapshots(),
+          builder: (context, snapshot) {
+            final count = snapshot.data?.docs.length ?? 0;
+
+            return GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const FollowingScreen()),
+                );
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  "Seguidos: $count",
+                  style: const TextStyle(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+
+        const SizedBox(height: 12),
         Text(
           "🔥 Racha de ${stats.racha} días consecutivos",
           style: const TextStyle(color: Colors.orange, fontSize: 16),
@@ -165,7 +192,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
     );
   }
 
-  // 📈 Bloque principal de progreso
+  // 📈 Métricas del progreso
   Widget _buildMetricasPrincipales(
     double progreso,
     UserStats stats,
@@ -175,7 +202,6 @@ class _PerfilScreenState extends State<PerfilScreen> {
     final zona = nivelData["zona"];
     final progresoNivel = nivelData["progresoNivel"];
     final xpRestante = nivelData["xpRestante"];
-    final xpSiguiente = nivelData["xpSiguiente"];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -189,19 +215,9 @@ class _PerfilScreenState extends State<PerfilScreen> {
           spacing: 12,
           runSpacing: 12,
           children: [
-            _metricCard(
-              Icons.star,
-              "Puntos",
-              "${stats.puntos} XP",
-              Colors.amber,
-            ),
+            _metricCard(Icons.star, "Puntos", "${stats.puntos} XP", Colors.amber),
             _metricCard(Icons.school, "Nivel $nivel", zona, AppColors.primary),
-            _metricCard(
-              Icons.book,
-              "Curso",
-              "${(progreso * 100).toStringAsFixed(0)}%",
-              Colors.green,
-            ),
+            _metricCard(Icons.book, "Curso", "${(progreso * 100).toStringAsFixed(0)}%", Colors.green),
           ],
         ),
         const SizedBox(height: 24),
@@ -214,7 +230,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
         ),
         const SizedBox(height: 8),
         Text(
-          "Progreso hacia el Nivel ${nivel + 1} — Faltan $xpRestante XP de $xpSiguiente",
+          "Te faltan $xpRestante XP -> Nivel ${nivel + 1}",
           style: const TextStyle(color: Colors.grey),
         ),
       ],

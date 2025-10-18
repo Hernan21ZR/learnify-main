@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:learnify/lessons/lesson_completed_screen.dart';
+import 'package:learnify/lessons/lesson_failed_screen.dart';
 import 'package:learnify/models/lesson.dart';
 import 'package:learnify/models/question.dart';
 import 'package:learnify/services/question_service.dart';
+import 'package:learnify/services/user_service.dart';
 import 'package:learnify/utils/constants.dart';
-import 'lesson_completed_screen.dart';
 
 class LessonScreen extends StatefulWidget {
   final String unidadId;
@@ -53,7 +55,7 @@ class _LessonScreenState extends State<LessonScreen> {
           respuestaSeleccionada == _preguntas[preguntaActual].respuestaCorrecta;
 
       if (respuestaCorrecta) {
-        puntos += 10;        
+        puntos += 10;
         _mostrarSnackBar('¡Correcto! +10 puntos', true);
       } else {
         _mostrarSnackBar(
@@ -64,11 +66,9 @@ class _LessonScreenState extends State<LessonScreen> {
     });
   }
 
-  void continuar() {
-    if (_preguntas.isEmpty) {
-      Navigator.pop(context);
-      return;
-    }
+  Future<void> continuar() async {
+    if (_preguntas.isEmpty) return;
+
     if (preguntaActual < _preguntas.length - 1) {
       setState(() {
         preguntaActual++;
@@ -77,15 +77,40 @@ class _LessonScreenState extends State<LessonScreen> {
         respuestaCorrecta = false;
       });
     } else {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => LessonCompletedScreen(
-            puntos: puntos,
-            leccionId: widget.leccion.id, // 🔥 pasa el id aquí
-          ),
-        ),
+      final totalPreguntas = _preguntas.length;
+      final puntajeMaximo = totalPreguntas * 10;
+      final porcentaje = (puntos / puntajeMaximo) * 100;
+
+      // Guarda el resultado en Firestore
+      await UserService.registrarResultadoLeccion(
+        widget.leccion.id,
+        puntos,
+        totalPreguntas,
       );
+
+      // Lógica de desbloqueo
+      if (porcentaje >= 75) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => LessonCompletedScreen(
+              puntos: puntos,
+              leccionId: widget.leccion.id,
+              porcentaje: porcentaje,
+            ),
+          ),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => LessonFailedScreen(
+              puntos: puntos,
+              porcentaje: porcentaje,
+            ),
+          ),
+        );
+      }
     }
   }
 
@@ -171,13 +196,12 @@ class _LessonScreenState extends State<LessonScreen> {
             ),
             const SizedBox(height: 32),
 
-            // Opciones
+            // Opciones idénticas al diseño original
             ...List.generate(pregunta.opciones.length, (i) {
               final opcion = pregunta.opciones[i];
               final esSeleccionada = respuestaSeleccionada == i;
               final esCorrecta = i == pregunta.respuestaCorrecta;
 
-              // Determinar color de fondo y borde según estado
               Color backgroundColor = Colors.grey.shade200;
               Color borderColor = Colors.transparent;
 
@@ -190,33 +214,19 @@ class _LessonScreenState extends State<LessonScreen> {
                   borderColor = Colors.red;
                 } else {
                   backgroundColor = Colors.grey.shade100;
-                  borderColor = Colors.transparent;
                 }
               } else if (esSeleccionada) {
                 backgroundColor = Colors.blue.shade100;
                 borderColor = Colors.blue;
-              } else {
-                backgroundColor = Colors.grey.shade200;
-                borderColor = Colors.transparent;
               }
 
-              // Elegir color de texto según luminosidad del fondo
               final textColor = backgroundColor.computeLuminance() > 0.5
                   ? Colors.black
                   : Colors.white;
 
-              // Construir estilo del botón usando ButtonStyle para controlar estados (incl. disabled)
               final ButtonStyle optionStyle = ButtonStyle(
                 backgroundColor: MaterialStateProperty.all(backgroundColor),
                 foregroundColor: MaterialStateProperty.all(textColor),
-                overlayColor: MaterialStateProperty.resolveWith<Color?>((
-                  states,
-                ) {
-                  if (states.contains(MaterialState.pressed)) {
-                    return Colors.black.withOpacity(0.05); // efecto al pulsar
-                  }
-                  return null;
-                }),
                 padding: MaterialStateProperty.all(const EdgeInsets.all(14)),
                 shape: MaterialStateProperty.all(
                   RoundedRectangleBorder(
@@ -259,7 +269,6 @@ class _LessonScreenState extends State<LessonScreen> {
 
             const Spacer(),
 
-            // Botón principal
             SizedBox(
               width: double.infinity,
               height: 50,
@@ -277,8 +286,8 @@ class _LessonScreenState extends State<LessonScreen> {
                 child: Text(
                   respuestaVerificada
                       ? (preguntaActual == _preguntas.length - 1
-                            ? 'TERMINAR'
-                            : 'CONTINUAR')
+                          ? 'TERMINAR'
+                          : 'CONTINUAR')
                       : 'COMPROBAR',
                   style: const TextStyle(
                     color: AppColors.white,

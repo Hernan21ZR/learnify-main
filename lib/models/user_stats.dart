@@ -4,6 +4,7 @@ class UserStats {
   final int racha;
   final List<dynamic> leccionesCompletadas;
   final int unidadActual;
+  final Map<String, int> puntajesLecciones;
 
   UserStats({
     required this.puntos,
@@ -11,6 +12,7 @@ class UserStats {
     required this.racha,
     required this.leccionesCompletadas,
     required this.unidadActual,
+    required this.puntajesLecciones,
   });
 
   factory UserStats.fromMap(Map<String, dynamic> data) {
@@ -20,6 +22,7 @@ class UserStats {
       racha: data['racha'] ?? 0,
       leccionesCompletadas: data['leccionesCompletadas'] ?? [],
       unidadActual: data['unidadActual'] ?? 1,
+      puntajesLecciones: Map<String, int>.from(data['puntajesLecciones'] ?? {}),
     );
   }
 
@@ -30,6 +33,7 @@ class UserStats {
       'racha': racha,
       'leccionesCompletadas': leccionesCompletadas,
       'unidadActual': unidadActual,
+      'puntajesLecciones': puntajesLecciones,
     };
   }
 }

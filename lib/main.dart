@@ -4,7 +4,7 @@ import 'package:learnify/screens/auth/login_screen.dart';
 import 'package:learnify/screens/auth/register_screen.dart';
 import 'package:learnify/screens/auth/welcome_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:learnify/services/firestore_seeder.dart';
+//import 'package:learnify/services/firestore_seeder.dart';
 import 'firebase_options.dart';
 
 Future<void> main() async {
