@@ -77,14 +77,18 @@ class _PerfilScreenState extends State<PerfilScreen> {
     double progresoNivel = xpSiguiente > 0 ? xpActual / xpSiguiente : 0;
 
     String zona;
-    if (nivel <= 5)
+    if (nivel <= 5) {
       zona = "Principiante 🟢";
-    else if (nivel <= 10)
+    }      
+    else if (nivel <= 10) {
       zona = "Intermedio 🟡";
-    else if (nivel <= 15)
+    }      
+    else if (nivel <= 15){
       zona = "Avanzado 🔵";
-    else
+    }      
+    else {
       zona = "Experto 🔥";
+    }      
 
     return {
       "nivel": nivel,
@@ -177,7 +181,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
+                  color: AppColors.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -228,7 +232,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
             _metricCard(Icons.book, "Curso",
                 "${(progreso * 100).toStringAsFixed(0)}%", Colors.green),
             _metricCard(Icons.emoji_events, "Puntaje semanal",
-                "${stats.puntosSemanales ?? 0} XP", Colors.deepPurple),
+                "${stats.puntosSemanales} XP", Colors.deepPurple),
           ],
         ),
         const SizedBox(height: 24),
@@ -296,7 +300,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
                     radius: 35,
                     backgroundImage: AssetImage(avatar),
                     backgroundColor: avatar == _avatarSeleccionado
-                        ? AppColors.primary.withOpacity(0.2)
+                        ? AppColors.primary.withValues(alpha: 0.2)
                         : Colors.transparent,
                   ),
                 );

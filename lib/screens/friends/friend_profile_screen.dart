@@ -7,7 +7,7 @@ import 'package:learnify/models/user_stats.dart';
 class FriendProfileScreen extends StatefulWidget {
   final String friendId;
 
-  const FriendProfileScreen({Key? key, required this.friendId}) : super(key: key);
+  const FriendProfileScreen({super.key, required this.friendId});
 
   @override
   State<FriendProfileScreen> createState() => _FriendProfileScreenState();
@@ -63,10 +63,18 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> {
     double progresoNivel = xpSiguiente > 0 ? xpActual / xpSiguiente : 0;
 
     String zona;
-    if (nivel <= 5) zona = "Principiante 🟢";
-    else if (nivel <= 10) zona = "Intermedio 🟡";
-    else if (nivel <= 15) zona = "Avanzado 🔵";
-    else zona = "Experto 🔥";
+    if (nivel <= 5) {
+      zona = "Principiante 🟢";
+    }
+    else if (nivel <= 10) {
+      zona = "Intermedio 🟡";
+    }
+    else if (nivel <= 15) {
+      zona = "Avanzado 🔵";
+    }
+    else {
+      zona = "Experto 🔥";
+    }
 
     return {"nivel": nivel, "zona": zona, "progresoNivel": progresoNivel.clamp(0.0, 1.0)};
   }

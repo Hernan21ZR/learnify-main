@@ -4,7 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:learnify/utils/constants.dart';
 
 class FollowingScreen extends StatelessWidget {
-  const FollowingScreen({Key? key}) : super(key: key);
+  const FollowingScreen({super.key});
 
   Stream<QuerySnapshot<Map<String, dynamic>>> _getFollowingStream() {
     final uid = FirebaseAuth.instance.currentUser?.uid;

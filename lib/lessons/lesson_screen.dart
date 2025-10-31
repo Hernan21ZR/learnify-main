@@ -225,16 +225,16 @@ class _LessonScreenState extends State<LessonScreen> {
                   : Colors.white;
 
               final ButtonStyle optionStyle = ButtonStyle(
-                backgroundColor: MaterialStateProperty.all(backgroundColor),
-                foregroundColor: MaterialStateProperty.all(textColor),
-                padding: MaterialStateProperty.all(const EdgeInsets.all(14)),
-                shape: MaterialStateProperty.all(
+                backgroundColor: WidgetStateProperty.all(backgroundColor),
+                foregroundColor: WidgetStateProperty.all(textColor),
+                padding: WidgetStateProperty.all(const EdgeInsets.all(14)),
+                shape: WidgetStateProperty.all(
                   RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                     side: BorderSide(color: borderColor, width: 2),
                   ),
                 ),
-                elevation: MaterialStateProperty.all(0),
+                elevation: WidgetStateProperty.all(0),
               );
 
               return Container(

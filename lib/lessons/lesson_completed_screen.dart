@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:learnify/utils/constants.dart';
-import 'package:learnify/home/home_screen.dart';
 
 class LessonCompletedScreen extends StatelessWidget {
   final int puntos;
@@ -24,12 +23,12 @@ class LessonCompletedScreen extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // 🎉 Imagen de celebración
+              // Imagen de celebración
               Container(
                 width: 200,
                 height: 200,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.white.withValues(alpha: 0.2),
                   shape: BoxShape.circle,
                 ),
                 child: AppImages.celebracion,
@@ -53,7 +52,7 @@ class LessonCompletedScreen extends StatelessWidget {
                   vertical: 12,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(25),
                 ),
                 child: Row(
@@ -78,7 +77,7 @@ class LessonCompletedScreen extends StatelessWidget {
                 'Puntaje obtenido: ${porcentaje.toStringAsFixed(1)}%\n¡Excelente trabajo! 💪',
                 style: TextStyle(
                   fontSize: 18,
-                  color: Colors.white.withOpacity(0.9),
+                  color: Colors.white.withValues(alpha: 0.9),
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -89,10 +88,7 @@ class LessonCompletedScreen extends StatelessWidget {
                 height: 56,
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(builder: (_) => const HomeScreen()),
-                      (route) => false,
-                    );
+                    Navigator.of(context).popUntil((route) => route.isFirst);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,

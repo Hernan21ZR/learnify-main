@@ -26,6 +26,6 @@ class FirestoreSeeder {
         }
       }
     }
-    print("✅ Datos de unidades, lecciones y preguntas subidos correctamente");
+    //print("✅ Datos de unidades, lecciones y preguntas subidos correctamente");
   }
 }

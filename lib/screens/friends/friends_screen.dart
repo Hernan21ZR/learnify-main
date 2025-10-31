@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:learnify/screens/friends/FriendProfileScreen.dart';
+import 'package:learnify/screens/friends/friend_profile_screen.dart';
 import 'package:learnify/services/friends_service.dart';
 import 'package:learnify/utils/constants.dart';
 import 'package:learnify/screens/friends/requests_screen.dart';
@@ -28,12 +28,14 @@ class _FriendsScreenState extends State<FriendsScreen> {
   }
 
   Future<void> _loadFriends() async {
-    setState(() => _isRefreshing = true); // 👈 Activa el loading global
+    // Activa loading global
+    setState(() => _isRefreshing = true); 
     final friends = await FriendsService.getFriends();
     if (!mounted) return;
     setState(() {
       _friends = friends;
-      _isRefreshing = false; // 👈 Desactiva loading al terminar
+      // Desactiva loading al terminar
+      _isRefreshing = false;
     });
   }
 
@@ -130,8 +132,9 @@ class _FriendsScreenState extends State<FriendsScreen> {
                   const Center(
                     child: Padding(
                       padding: EdgeInsets.all(12),
-                      child:
-                          CircularProgressIndicator(color: AppColors.primary),
+                      child: CircularProgressIndicator(
+                        color: AppColors.primary,
+                      ),
                     ),
                   )
                 else if (_searchController.text.isNotEmpty)
@@ -150,10 +153,12 @@ class _FriendsScreenState extends State<FriendsScreen> {
                               child: ListTile(
                                 leading: const CircleAvatar(
                                   backgroundColor: AppColors.primary,
-                                  child: Icon(Icons.person, color: Colors.white),
+                                  child: Icon(
+                                    Icons.person,
+                                    color: Colors.white,
+                                  ),
                                 ),
-                                title:
-                                    Text("${u['nombre']} ${u['apellidos']}"),
+                                title: Text("${u['nombre']} ${u['apellidos']}"),
                                 subtitle: Text(u['email']),
                                 trailing: Row(
                                   mainAxisSize: MainAxisSize.min,
@@ -251,12 +256,19 @@ class _FriendsScreenState extends State<FriendsScreen> {
               final count = snapshot.data ?? 0;
 
               return FloatingActionButton.extended(
-                onPressed: () {
-                  Navigator.push(
+                onPressed: () async {
+                  // Esperar a que regrese de la pantalla
+                  final result = await Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (_) => const FriendRequestsScreen()),
-                  ).then((_) => _loadFriends());
+                      builder: (_) => const FriendRequestsScreen(),
+                    ),
+                  );
+
+                  // recargar si se aceptó/rechazó alguna solicitud
+                  if (result == true) {
+                    _loadFriends();
+                  }
                 },
                 backgroundColor: AppColors.primary,
                 icon: Stack(
@@ -297,10 +309,10 @@ class _FriendsScreenState extends State<FriendsScreen> {
           ),
         ),
 
-        // 🌀 Overlay de carga al refrescar
+        // Overlay de carga al refrescar
         if (_isRefreshing)
           Container(
-            color: Colors.black.withOpacity(0.3),
+            color: Colors.black.withValues(alpha: 0.3),
             child: const Center(
               child: CircularProgressIndicator(
                 color: AppColors.primary,

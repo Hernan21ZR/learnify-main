@@ -19,4 +19,5 @@ class AppStrings {
 class AppImages {
   static Image logo = Image.asset('images/logo.png', height: 150);
   static Image celebracion = Image.asset('images/celebracion.png', height: 150);
+  static Image triste = Image.asset('images/duo_triste.png', height: 150);
 }

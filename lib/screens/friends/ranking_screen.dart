@@ -118,7 +118,7 @@ class _RankingScreenState extends State<RankingScreen>
                 : Colors.white,
             elevation: isCurrentUser ? 6 : 2,
             shadowColor: isCurrentUser
-                ? Colors.greenAccent.withOpacity(0.4)
+                ? Colors.greenAccent.withValues(alpha: 0.4)
                 : Colors.black12,
             margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             child: ListTile(

@@ -20,49 +20,23 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  List<Unit> _unidades = [];
-  bool _isLoading = true;
-  String? _error;
   int _currentIndex = 0;
-  UserStats? _userStats;
+  
+  // Lista de widgets para cada pantalla
+  late final List<Widget> _screens;
 
   @override
   void initState() {
     super.initState();
-    _cargarUnidades();
-    _cargarUserStats();
     UserService.verificarYReiniciarPuntosSemanales();
-  }
-
-  Future<void> _cargarUserStats() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
-
-    final stats = await UserService.obtenerUserStats(user.uid);
-    if (!mounted) return;
-    setState(() => _userStats = stats);
-  }
-
-  Future<void> _cargarUnidades() async {
-    try {
-      setState(() {
-        _isLoading = true;
-        _error = null;
-      });
-
-      final unidades = await UnitsService.obtenerUnidades();
-      if (!mounted) return;
-      setState(() {
-        _unidades = unidades;
-        _isLoading = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _error = 'Error al cargar las unidades: $e';
-        _isLoading = false;
-      });
-    }
+    
+    // Se inicializan las pantallas una vez
+    _screens = [
+      const UnitsTab(),
+      const FriendsScreen(),
+      const RankingScreen(),
+      const PerfilTab(),
+    ];
   }
 
   void _onTabSelected(int index) => setState(() => _currentIndex = index);
@@ -88,9 +62,7 @@ class _HomeScreenState extends State<HomeScreen> {
         await AuthService().signOut();
         await Future.delayed(const Duration(milliseconds: 300));
         if (!mounted) return;
-        Navigator.of(
-          context,
-        ).pushNamedAndRemoveUntil('/welcome', (route) => false);
+        Navigator.of(context).pushNamedAndRemoveUntil('/welcome', (route) => false);
       }
     });
   }
@@ -117,27 +89,33 @@ class _HomeScreenState extends State<HomeScreen> {
             color: Colors.white,
           ),
         ),
-
         centerTitle: true,
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
           if (_currentIndex == 0)
-            Row(
-              children: [
-                const Icon(Icons.star_rounded, color: Colors.amber, size: 26),
-                const SizedBox(width: 4),
-                Text(
-                  '${_userStats?.puntos ?? 0}',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(width: 12),
-              ],
+            // StreamBuilder para actualizar los puntos en tiempo real
+            StreamBuilder<UserStats?>(
+              stream: _getUserStatsStream(),
+              builder: (context, snapshot) {
+                final puntos = snapshot.data?.puntos ?? 0;
+                return Row(
+                  children: [
+                    const Icon(Icons.star_rounded, color: Colors.amber, size: 26),
+                    const SizedBox(width: 4),
+                    Text(
+                      '$puntos',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                  ],
+                );
+              },
             ),
           IconButton(
             icon: const Icon(Icons.settings_rounded, color: Colors.white),
@@ -146,9 +124,10 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       body: SafeArea(
-        child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 300),
-          child: _getBodyContent(),
+        // Mantiene activas todas las pantallas
+        child: IndexedStack(
+          index: _currentIndex,
+          children: _screens,
         ),
       ),
       bottomNavigationBar: SafeArea(
@@ -184,14 +163,80 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _getBodyContent() {
-    if (_currentIndex == 1) {
-      return const FriendsScreen();
-    } else if (_currentIndex == 2) {
-      return const RankingScreen();
-    } else if (_currentIndex == 3) {
-      return PerfilScreen(unidades: _unidades, userStats: _userStats);
+  Stream<UserStats?> _getUserStatsStream() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return Stream.value(null);
+    
+    return UserService.getUserStatsStream(user.uid);
+  }
+}
+
+// TAB DE UNIDADES
+class UnitsTab extends StatefulWidget {
+  const UnitsTab({super.key});
+
+  @override
+  State<UnitsTab> createState() => _UnitsTabState();
+}
+
+class _UnitsTabState extends State<UnitsTab> with AutomaticKeepAliveClientMixin {
+  List<Unit> _unidades = [];
+  bool _isLoading = true;
+  String? _error;
+  UserStats? _userStats;
+
+  // Mantener activo el estado cuando cambiamos de pestaña
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarDatos();
+  }
+
+  Future<void> _cargarDatos() async {
+    await Future.wait([
+      _cargarUnidades(),
+      _cargarUserStats(),
+    ]);
+  }
+
+  Future<void> _cargarUserStats() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final stats = await UserService.obtenerUserStats(user.uid);
+    if (!mounted) return;
+    setState(() => _userStats = stats);
+  }
+
+  Future<void> _cargarUnidades() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+
+      final unidades = await UnitsService.obtenerUnidades();
+      if (!mounted) return;
+      setState(() {
+        _unidades = unidades;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = 'Error al cargar las unidades: $e';
+        _isLoading = false;
+      });
     }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Para mantener el estado con AutomaticKeepAliveClientMixin
+    super.build(context);
 
     if (_isLoading) {
       return const Center(
@@ -199,7 +244,17 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     } else if (_error != null) {
       return Center(
-        child: Text(_error!, style: const TextStyle(color: Colors.red)),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(_error!, style: const TextStyle(color: Colors.red)),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _cargarDatos,
+              child: const Text('Reintentar'),
+            ),
+          ],
+        ),
       );
     } else if (_unidades.isEmpty) {
       return const Center(
@@ -212,10 +267,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return RefreshIndicator(
       color: AppColors.primary,
-      onRefresh: () async {
-        await _cargarUnidades();
-        await _cargarUserStats();
-      },
+      onRefresh: _cargarDatos,
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
         itemCount: _unidades.length,
@@ -235,7 +287,6 @@ class _HomeScreenState extends State<HomeScreen> {
         .length;
     final progreso = total > 0 ? completadasUnidad / total : 0.0;
 
-    // 🔒 Bloqueo de unidades
     bool bloqueada = false;
     if (numeroUnidad > 1) {
       final unidadAnterior = _unidades[numeroUnidad - 2];
@@ -259,8 +310,7 @@ class _HomeScreenState extends State<HomeScreen> {
       Colors.cyan,
       Colors.greenAccent,
     ];
-    final Color baseColor =
-        unidadColors[(numeroUnidad - 1) % unidadColors.length];
+    final Color baseColor = unidadColors[(numeroUnidad - 1) % unidadColors.length];
 
     Color getProgressColor() {
       if (progreso < 0.3) return Colors.redAccent;
@@ -344,25 +394,15 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     Text(
                       "${(progreso * 100).toStringAsFixed(0)}% completado",
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 13,
-                      ),
+                      style: const TextStyle(color: Colors.white70, fontSize: 13),
                     ),
                     Row(
                       children: [
-                        const Icon(
-                          Icons.menu_book_rounded,
-                          color: Colors.white70,
-                          size: 16,
-                        ),
+                        const Icon(Icons.menu_book_rounded, color: Colors.white70, size: 16),
                         const SizedBox(width: 4),
                         Text(
                           "$completadasUnidad/$total lecciones",
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 13,
-                          ),
+                          style: const TextStyle(color: Colors.white70, fontSize: 13),
                         ),
                       ],
                     ),
@@ -379,46 +419,31 @@ class _HomeScreenState extends State<HomeScreen> {
               : unidad.lecciones
                     .asMap()
                     .entries
-                    .map(
-                      (entry) => _buildLeccionItem(
-                        unidad,
-                        entry.value,
-                        entry.key + 1,
-                        baseColor,
-                      ),
-                    )
+                    .map((entry) => _buildLeccionItem(
+                          unidad,
+                          entry.value,
+                          entry.key + 1,
+                          baseColor,
+                        ))
                     .toList(),
         ),
       ),
     );
   }
 
-  Widget _buildLeccionItem(
-    Unit unidad,
-    Lesson leccion,
-    int numeroLeccion,
-    Color baseColor,
-  ) {
+  Widget _buildLeccionItem(Unit unidad, Lesson leccion, int numeroLeccion, Color baseColor) {
     final completadas = _userStats?.leccionesCompletadas ?? [];
     final completada = completadas.contains(leccion.id);
 
-    // ✅ Verificar si la lección está bloqueada
     bool bloqueada = false;
-
-    // La primera lección de la primera unidad siempre está desbloqueada
     if (unidad.orden == 1 && numeroLeccion == 1) {
       bloqueada = false;
     } else {
-      // Buscar el índice de la lección actual
       final indexActual = unidad.lecciones.indexOf(leccion);
-
-      // Si no es la primera lección de la unidad
       if (indexActual > 0) {
         final leccionAnterior = unidad.lecciones[indexActual - 1];
-        // Solo desbloquear si la anterior está completada
         bloqueada = !completadas.contains(leccionAnterior.id);
       } else {
-        // Si es la primera lección de otra unidad, desbloquear solo si TODA la unidad anterior fue completada
         final indexUnidad = _unidades.indexOf(unidad);
         if (indexUnidad > 0) {
           final unidadAnterior = _unidades[indexUnidad - 1];
@@ -430,11 +455,8 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     }
 
-    // 🎨 Colores
     final double intensidad = 0.2 + (numeroLeccion * 0.1);
-    final Color colorLeccion = baseColor.withOpacity(
-      intensidad.clamp(0.3, 0.9),
-    );
+    final Color colorLeccion = baseColor.withValues(alpha: intensidad.clamp(0.2, 0.8));
     final Color backgroundColor = completada
         ? colorLeccion
         : bloqueada
@@ -444,7 +466,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ? colorLeccion
         : bloqueada
         ? Colors.grey.shade400
-        : colorLeccion.withOpacity(0.4);
+        : colorLeccion.withValues(alpha: 0.4);
     final Color textColor = completada
         ? Colors.white
         : bloqueada
@@ -457,18 +479,14 @@ class _HomeScreenState extends State<HomeScreen> {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
-          splashColor: bloqueada
-              ? Colors.transparent
-              : colorLeccion.withOpacity(0.25),
+          splashColor: bloqueada ? Colors.transparent : colorLeccion.withValues(alpha: 0.25),
           onTap: bloqueada
               ? () {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: const Text(
-                        'Completa la lección anterior para desbloquear esta.',
-                      ),
+                    const SnackBar(
+                      content: Text('Completa la lección anterior para desbloquear esta.'),
                       backgroundColor: Colors.orangeAccent,
-                      duration: const Duration(seconds: 2),
+                      duration: Duration(seconds: 2),
                     ),
                   );
                 }
@@ -482,7 +500,7 @@ class _HomeScreenState extends State<HomeScreen> {
               border: Border.all(color: borderColor, width: 1.4),
               boxShadow: [
                 BoxShadow(
-                  color: colorLeccion.withOpacity(0.25),
+                  color: colorLeccion.withValues(alpha: 0.25),
                   blurRadius: 8,
                   offset: const Offset(0, 4),
                 ),
@@ -516,9 +534,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 if (!bloqueada)
                   Icon(
-                    completada
-                        ? Icons.verified_rounded
-                        : Icons.play_arrow_rounded,
+                    completada ? Icons.verified_rounded : Icons.play_arrow_rounded,
                     color: completada ? Colors.white : colorLeccion,
                     size: 26,
                   ),
@@ -530,11 +546,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _mostrarDialogoLeccion(
-    Lesson leccion,
-    String unidadId,
-    Color colorLeccion,
-  ) {
+  void _mostrarDialogoLeccion(Lesson leccion, String unidadId, Color colorLeccion) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -589,19 +601,81 @@ class _HomeScreenState extends State<HomeScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) =>
-                      LessonScreen(unidadId: unidadId, leccion: leccion),
+                  builder: (_) => LessonScreen(unidadId: unidadId, leccion: leccion),
                 ),
-              );
+              ).then((_) {
+                // Recargar stats cuando vuelva de la lección
+                _cargarUserStats();
+              });
             },
             style: ElevatedButton.styleFrom(backgroundColor: colorLeccion),
-            child: const Text(
-              'Comenzar',
-              style: TextStyle(color: Colors.white),
-            ),
+            child: const Text('Comenzar', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
+    );
+  }
+}
+
+// TAB DE PERFIL
+class PerfilTab extends StatefulWidget {
+  const PerfilTab({super.key});
+
+  @override
+  State<PerfilTab> createState() => _PerfilTabState();
+}
+
+class _PerfilTabState extends State<PerfilTab> with AutomaticKeepAliveClientMixin {
+  List<Unit> _unidades = [];
+  bool _isLoading = true;
+
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarUnidades();
+  }
+
+  Future<void> _cargarUnidades() async {
+    setState(() => _isLoading = true);
+    
+    final unidades = await UnitsService.obtenerUnidades();
+    
+    if (!mounted) return;
+    setState(() {
+      _unidades = unidades;
+      _isLoading = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      return const Center(child: Text('No hay usuario autenticado'));
+    }
+
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator(color: AppColors.primary));
+    }
+    
+    // StreamBuilder para obtener stats en tiempo real
+    return StreamBuilder<UserStats?>(
+      stream: UserService.getUserStatsStream(user.uid),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator(color: AppColors.primary));
+        }
+        
+        return PerfilScreen(
+          unidades: _unidades,
+          userStats: snapshot.data,
+        );
+      },
     );
   }
 }

@@ -112,8 +112,10 @@ class UserService {
 
     final int puntajePrevio = (puntajesLecciones[leccionId] ?? 0);
     final int puntajeMaximo = totalPreguntas * 10;
-    final int puntosAcumulados =
-        (puntajePrevio + nuevoPuntaje).clamp(0, puntajeMaximo);
+    final int puntosAcumulados = (puntajePrevio + nuevoPuntaje).clamp(
+      0,
+      puntajeMaximo,
+    );
     final double porcentaje = (puntosAcumulados / puntajeMaximo) * 100;
 
     await docRef.update({
@@ -149,9 +151,7 @@ class UserService {
         "ultimaActualizacionSemana": Timestamp.fromDate(now),
       });
     } else {
-      await docRef.update({
-        "puntosSemanales": FieldValue.increment(cantidad),
-      });
+      await docRef.update({"puntosSemanales": FieldValue.increment(cantidad)});
     }
   }
 
@@ -163,12 +163,12 @@ class UserService {
         'puntosSemanales': doc.data()['puntosSemanales'] ?? 0,
         'ultimaActualizacionSemana':
             doc.data()['ultimaActualizacionSemana'] ??
-                Timestamp.fromDate(DateTime.now()),
+            Timestamp.fromDate(DateTime.now()),
       }, SetOptions(merge: true));
     }
   }
 
-    /// 🔁 Reinicia los puntos semanales si ha pasado más de 7 días
+  /// 🔁 Reinicia los puntos semanales si ha pasado más de 7 días
   static Future<void> verificarYReiniciarPuntosSemanales() async {
     final uid = _auth.currentUser?.uid;
     if (uid == null) return;
@@ -195,17 +195,27 @@ class UserService {
 
     // Comparamos si ha pasado más de una semana o si ya es lunes
     final bool haPasadoSemana = now.difference(ultima).inDays >= 7;
-    final bool esNuevoLunes = now.weekday == DateTime.monday &&
-        ultima.weekday != DateTime.monday;
+    final bool esNuevoLunes =
+        now.weekday == DateTime.monday && ultima.weekday != DateTime.monday;
 
     if (haPasadoSemana || esNuevoLunes) {
       await docRef.update({
         "puntosSemanales": 0,
         "ultimaActualizacionSemana": Timestamp.fromDate(now),
       });
-      print("✅ Puntos semanales reiniciados para el usuario $uid");
+      //print("✅ Puntos semanales reiniciados para el usuario $uid");
     }
   }
 
+  // obtiene un stream de UserStats
+  static Stream<UserStats?> getUserStatsStream(String uid) {
+    return FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .snapshots()
+        .map((snapshot) {
+          if (!snapshot.exists) return null;
+          return UserStats.fromMap(snapshot.data()!);
+        });
+  }
 }
-
