@@ -18,6 +18,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
   List<Map<String, dynamic>> _friends = [];
   List<Map<String, dynamic>> _searchResults = [];
   bool _isSearching = false;
+  bool _isRefreshing = false; // 👈 Nuevo
   final Set<String> _seguidores = {};
 
   @override
@@ -27,9 +28,13 @@ class _FriendsScreenState extends State<FriendsScreen> {
   }
 
   Future<void> _loadFriends() async {
+    setState(() => _isRefreshing = true); // 👈 Activa el loading global
     final friends = await FriendsService.getFriends();
     if (!mounted) return;
-    setState(() => _friends = friends);
+    setState(() {
+      _friends = friends;
+      _isRefreshing = false; // 👈 Desactiva loading al terminar
+    });
   }
 
   Future<void> _searchUsers(String query) async {
@@ -84,211 +89,226 @@ class _FriendsScreenState extends State<FriendsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: RefreshIndicator(
-        color: AppColors.primary,
-        onRefresh: _loadFriends,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            const Text(
-              "Buscar usuarios",
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: AppColors.white,
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _searchController,
-              textCapitalization: TextCapitalization.none,
-              textInputAction: TextInputAction.search,
-              onChanged: _searchUsers,
-              decoration: InputDecoration(
-                hintText: "Buscar por nombre, apellido o correo...",
-                prefixIcon: const Icon(Icons.search),
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-
-            // 🔍 Resultados de búsqueda
-            if (_isSearching)
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(12),
-                  child: CircularProgressIndicator(color: AppColors.primary),
-                ),
-              )
-            else if (_searchController.text.isNotEmpty)
-              _searchResults.isEmpty
-                  ? const Text(
-                      "No se encontraron usuarios",
-                      style: TextStyle(color: Colors.grey),
-                    )
-                  : Column(
-                      children: _searchResults.map((u) {
-                        final isFollowing = _seguidores.contains(u['id']);
-                        final isFriend = u['isFriend'] == true;
-                        final hasRequest = u['hasRequest'] == true;
-
-                        return Card(
-                          child: ListTile(
-                            leading: const CircleAvatar(
-                              backgroundColor: AppColors.primary,
-                              child: Icon(Icons.person, color: Colors.white),
-                            ),
-                            title: Text("${u['nombre']} ${u['apellidos']}"),
-                            subtitle: Text(u['email']),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  icon: Icon(
-                                    isFollowing
-                                        ? Icons.favorite
-                                        : Icons.favorite_border,
-                                    color: isFollowing
-                                        ? Colors.red
-                                        : Colors.redAccent,
-                                  ),
-                                  onPressed: () =>
-                                      _toggleSeguir(u['id'], isFollowing),
-                                ),
-
-                                if (isFriend)
-                                  const Icon(
-                                    Icons.check_circle,
-                                    color: Colors.green,
-                                    size: 27,
-                                  )
-                                else if (hasRequest)
-                                  const Icon(
-                                    Icons.hourglass_top_rounded,
-                                    color: Colors.orange,
-                                    size: 27,
-                                  )
-                                else
-                                  IconButton(
-                                    icon: const Icon(
-                                      Icons.add_circle,
-                                      color: AppColors.primary,
-                                      size: 27,
-                                    ),
-                                    onPressed: () => _sendRequest(u['id']),
-                                  ),
-                              ],
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-
-            const SizedBox(height: 20),
-            const Divider(),
-
-            const Text(
-              "Mis Amigos",
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: AppColors.white,
-              ),
-            ),
-            const SizedBox(height: 10),
-
-            if (_friends.isEmpty)
-              const Text(
-                "Aún no tienes amigos agregados",
-                style: TextStyle(color: Colors.grey),
-              )
-            else
-              ..._friends.map(
-                (f) => Card(
-                  child: ListTile(
-                    leading: const CircleAvatar(
-                      backgroundColor: Colors.blueAccent,
-                      child: Icon(Icons.person, color: Colors.white),
-                    ),
-                    title: Text("${f['nombre']} ${f['apellidos']}"),
-                    subtitle: Text(f['email']),
-                    trailing: const Icon(
-                      Icons.chevron_right,
-                      color: Colors.grey,
-                      size: 28,
-                    ),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) =>
-                              FriendProfileScreen(friendId: f['id']),
-                        ),
-                      );
-                    },
+    return Stack(
+      children: [
+        Scaffold(
+          backgroundColor: AppColors.background,
+          body: RefreshIndicator(
+            color: AppColors.primary,
+            onRefresh: _loadFriends,
+            child: ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                const Text(
+                  "Buscar usuarios",
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.white,
                   ),
                 ),
-              ),
-          ],
-        ),
-      ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _searchController,
+                  textCapitalization: TextCapitalization.none,
+                  textInputAction: TextInputAction.search,
+                  onChanged: _searchUsers,
+                  decoration: InputDecoration(
+                    hintText: "Buscar por nombre, apellido o correo...",
+                    prefixIcon: const Icon(Icons.search),
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
 
-      // 💌 Botón flotante con contador de solicitudes
-      floatingActionButton: StreamBuilder<int>(
-        stream: _getPendingRequestsCount(),
-        builder: (context, snapshot) {
-          final count = snapshot.data ?? 0;
+                // 🔍 Resultados de búsqueda
+                if (_isSearching)
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(12),
+                      child:
+                          CircularProgressIndicator(color: AppColors.primary),
+                    ),
+                  )
+                else if (_searchController.text.isNotEmpty)
+                  _searchResults.isEmpty
+                      ? const Text(
+                          "No se encontraron usuarios",
+                          style: TextStyle(color: Colors.grey),
+                        )
+                      : Column(
+                          children: _searchResults.map((u) {
+                            final isFollowing = _seguidores.contains(u['id']);
+                            final isFriend = u['isFriend'] == true;
+                            final hasRequest = u['hasRequest'] == true;
 
-          return FloatingActionButton.extended(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const FriendRequestsScreen()),
-              ).then((_) => _loadFriends());
-            },
-            backgroundColor: AppColors.primary,
-            icon: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                const Icon(Icons.group_add_rounded, color: Colors.white),
-                if (count > 0)
-                  Positioned(
-                    right: -6,
-                    top: -4,
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(
-                        color: Colors.red,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Text(
-                        '$count',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
+                            return Card(
+                              child: ListTile(
+                                leading: const CircleAvatar(
+                                  backgroundColor: AppColors.primary,
+                                  child: Icon(Icons.person, color: Colors.white),
+                                ),
+                                title:
+                                    Text("${u['nombre']} ${u['apellidos']}"),
+                                subtitle: Text(u['email']),
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      icon: Icon(
+                                        isFollowing
+                                            ? Icons.favorite
+                                            : Icons.favorite_border,
+                                        color: isFollowing
+                                            ? Colors.red
+                                            : Colors.redAccent,
+                                      ),
+                                      onPressed: () =>
+                                          _toggleSeguir(u['id'], isFollowing),
+                                    ),
+                                    if (isFriend)
+                                      const Icon(
+                                        Icons.check_circle,
+                                        color: Colors.green,
+                                        size: 27,
+                                      )
+                                    else if (hasRequest)
+                                      const Icon(
+                                        Icons.hourglass_top_rounded,
+                                        color: Colors.orange,
+                                        size: 27,
+                                      )
+                                    else
+                                      IconButton(
+                                        icon: const Icon(
+                                          Icons.add_circle,
+                                          color: AppColors.primary,
+                                          size: 27,
+                                        ),
+                                        onPressed: () => _sendRequest(u['id']),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }).toList(),
                         ),
+
+                const SizedBox(height: 20),
+                const Divider(),
+                const Text(
+                  "Mis Amigos",
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.white,
+                  ),
+                ),
+                const SizedBox(height: 10),
+
+                if (_friends.isEmpty)
+                  const Text(
+                    "Aún no tienes amigos agregados",
+                    style: TextStyle(color: Colors.grey),
+                  )
+                else
+                  ..._friends.map(
+                    (f) => Card(
+                      child: ListTile(
+                        leading: const CircleAvatar(
+                          backgroundColor: Colors.blueAccent,
+                          child: Icon(Icons.person, color: Colors.white),
+                        ),
+                        title: Text("${f['nombre']} ${f['apellidos']}"),
+                        subtitle: Text(f['email']),
+                        trailing: const Icon(
+                          Icons.chevron_right,
+                          color: Colors.grey,
+                          size: 28,
+                        ),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  FriendProfileScreen(friendId: f['id']),
+                            ),
+                          );
+                        },
                       ),
                     ),
                   ),
               ],
             ),
-            label: const Text(
-              "Solicitudes",
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
+          ),
+          floatingActionButton: StreamBuilder<int>(
+            stream: _getPendingRequestsCount(),
+            builder: (context, snapshot) {
+              final count = snapshot.data ?? 0;
+
+              return FloatingActionButton.extended(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => const FriendRequestsScreen()),
+                  ).then((_) => _loadFriends());
+                },
+                backgroundColor: AppColors.primary,
+                icon: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    const Icon(Icons.group_add_rounded, color: Colors.white),
+                    if (count > 0)
+                      Positioned(
+                        right: -6,
+                        top: -4,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(
+                            color: Colors.red,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Text(
+                            '$count',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                label: const Text(
+                  "Solicitudes",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+
+        // 🌀 Overlay de carga al refrescar
+        if (_isRefreshing)
+          Container(
+            color: Colors.black.withOpacity(0.3),
+            child: const Center(
+              child: CircularProgressIndicator(
+                color: AppColors.primary,
+                strokeWidth: 5,
               ),
             ),
-          );
-        },
-      ),
+          ),
+      ],
     );
   }
 }

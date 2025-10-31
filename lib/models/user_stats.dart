@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class UserStats {
   final int puntos;
   final int nivel;
@@ -5,6 +7,8 @@ class UserStats {
   final List<dynamic> leccionesCompletadas;
   final int unidadActual;
   final Map<String, int> puntajesLecciones;
+  final int puntosSemanales; // 👈 Nuevo
+  final DateTime? ultimaActualizacionSemana;
 
   UserStats({
     required this.puntos,
@@ -13,6 +17,8 @@ class UserStats {
     required this.leccionesCompletadas,
     required this.unidadActual,
     required this.puntajesLecciones,
+    required this.puntosSemanales,
+    this.ultimaActualizacionSemana,
   });
 
   factory UserStats.fromMap(Map<String, dynamic> data) {
@@ -23,6 +29,10 @@ class UserStats {
       leccionesCompletadas: data['leccionesCompletadas'] ?? [],
       unidadActual: data['unidadActual'] ?? 1,
       puntajesLecciones: Map<String, int>.from(data['puntajesLecciones'] ?? {}),
+      puntosSemanales: data['puntosSemanales'] ?? 0, // ✅ lee Firestore
+      ultimaActualizacionSemana: data['ultimaActualizacionSemana'] != null
+          ? (data['ultimaActualizacionSemana'] as Timestamp).toDate()
+          : null,
     );
   }
 
@@ -34,6 +44,8 @@ class UserStats {
       'leccionesCompletadas': leccionesCompletadas,
       'unidadActual': unidadActual,
       'puntajesLecciones': puntajesLecciones,
+      'puntosSemanales': puntosSemanales,
+      'ultimaActualizacionSemana': ultimaActualizacionSemana,
     };
   }
 }

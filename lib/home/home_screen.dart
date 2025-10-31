@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:learnify/models/unit.dart';
 import 'package:learnify/models/lesson.dart';
 import 'package:learnify/screens/friends/friends_screen.dart';
+import 'package:learnify/screens/friends/ranking_screen.dart';
 import 'package:learnify/screens/profile/perfil_screen.dart';
 import 'package:learnify/services/units_service.dart';
 import 'package:learnify/lessons/lesson_screen.dart';
@@ -30,6 +31,7 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _cargarUnidades();
     _cargarUserStats();
+    UserService.verificarYReiniciarPuntosSemanales();
   }
 
   Future<void> _cargarUserStats() async {
@@ -106,6 +108,8 @@ class _HomeScreenState extends State<HomeScreen> {
               ? "Mis Unidades"
               : _currentIndex == 1
               ? "Amigos"
+              : _currentIndex == 2
+              ? "Ranking Semanal"
               : "Perfil",
           style: const TextStyle(
             fontWeight: FontWeight.bold,
@@ -167,6 +171,10 @@ class _HomeScreenState extends State<HomeScreen> {
               label: 'Amigos',
             ),
             BottomNavigationBarItem(
+              icon: Icon(Icons.emoji_events_rounded),
+              label: 'Ranking',
+            ),
+            BottomNavigationBarItem(
               icon: Icon(Icons.person_rounded),
               label: 'Perfil',
             ),
@@ -178,8 +186,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _getBodyContent() {
     if (_currentIndex == 1) {
-      return FriendsScreen();
+      return const FriendsScreen();
     } else if (_currentIndex == 2) {
+      return const RankingScreen();
+    } else if (_currentIndex == 3) {
       return PerfilScreen(unidades: _unidades, userStats: _userStats);
     }
 
