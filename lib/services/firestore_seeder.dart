@@ -16,7 +16,7 @@ class FirestoreSeeder {
 
         await leccionRef.set(leccion.toFirestore());
 
-        // Subir preguntas de la lección si existen
+        // Subir preguntas de la lección
         final preguntas = QuestionsSeed.preguntasPorLeccion[leccion.id] ?? [];
         for (var pregunta in preguntas) {
           await leccionRef
@@ -25,7 +25,6 @@ class FirestoreSeeder {
               .set(pregunta.toFirestore());
         }
       }
-    }
-    //print("✅ Datos de unidades, lecciones y preguntas subidos correctamente");
+    }    
   }
 }

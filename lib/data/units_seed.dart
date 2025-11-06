@@ -92,5 +92,116 @@ class UnitsSeed {
         ),
       ],
     ),
+    Unit(
+      id: 'unidad_5',
+      nombre: 'Verbos y acciones',
+      descripcion: 'Aprende a expresar acciones cotidianas y rutinas',
+      orden: 5,
+      bloqueada: true,
+      lecciones: [
+        Lesson(
+          id: 'unidad_5_leccion_1',
+          titulo: 'Verbos comunes',
+          orden: 1,
+          descripcion: 'Conoce los verbos más usados en la vida diaria.',
+        ),
+        Lesson(
+          id: 'unidad_5_leccion_2',
+          titulo: 'Rutinas diarias',
+          orden: 2,
+          descripcion: 'Aprende a hablar de lo que haces cada día.',
+          prerequisitos: ['unidad_5_leccion_1'],
+        ),
+      ],
+    ),
+
+    Unit(
+      id: 'unidad_6',
+      nombre: 'El tiempo y el clima',
+      descripcion: 'Aprende a hablar sobre el clima y las estaciones.',
+      orden: 6,
+      bloqueada: true,
+      lecciones: [
+        Lesson(
+          id: 'unidad_6_leccion_1',
+          titulo: 'El clima',
+          orden: 1,
+          descripcion: 'Vocabulario y frases para describir el tiempo.',
+        ),
+        Lesson(
+          id: 'unidad_6_leccion_2',
+          titulo: 'Las estaciones del año',
+          orden: 2,
+          descripcion: 'Aprende los nombres y características de las estaciones.',
+          prerequisitos: ['unidad_6_leccion_1'],
+        ),
+      ],
+    ),
+    Unit(
+      id: 'unidad_7',
+      nombre: 'Viajes y transporte',
+      descripcion: 'Aprende a moverte y comunicarte en viajes.',
+      orden: 7,
+      bloqueada: true,
+      lecciones: [
+        Lesson(
+          id: 'unidad_7_leccion_1',
+          titulo: 'Medios de transporte',
+          orden: 1,
+          descripcion: 'Aprende vocabulario sobre transporte y movimiento.',
+        ),
+        Lesson(
+          id: 'unidad_7_leccion_2',
+          titulo: 'En el aeropuerto',
+          orden: 2,
+          descripcion: 'Frases útiles para viajar y moverte por el aeropuerto.',
+          prerequisitos: ['unidad_7_leccion_1'],
+        ),
+      ],
+    ),
+    Unit(
+      id: 'unidad_8',
+      nombre: 'Compras y dinero',
+      descripcion: 'Aprende a comprar, vender y manejar dinero.',
+      orden: 8,
+      bloqueada: true,
+      lecciones: [
+        Lesson(
+          id: 'unidad_8_leccion_1',
+          titulo: 'En la tienda',
+          orden: 1,
+          descripcion: 'Frases y vocabulario para comprar productos.',
+        ),
+        Lesson(
+          id: 'unidad_8_leccion_2',
+          titulo: 'Dinero y precios',
+          orden: 2,
+          descripcion: 'Aprende a preguntar y hablar sobre precios y dinero.',
+          prerequisitos: ['unidad_8_leccion_1'],
+        ),
+      ],
+    ),
+    Unit(
+      id: 'unidad_9',
+      nombre: 'Salud y cuerpo',
+      descripcion: 'Aprende vocabulario relacionado con el cuerpo y la salud.',
+      orden: 9,
+      bloqueada: true,
+      lecciones: [
+        Lesson(
+          id: 'unidad_9_leccion_1',
+          titulo: 'Partes del cuerpo',
+          orden: 1,
+          descripcion: 'Conoce el vocabulario del cuerpo humano.',
+        ),
+        Lesson(
+          id: 'unidad_9_leccion_2',
+          titulo: 'En el médico',
+          orden: 2,
+          descripcion: 'Aprende frases para describir síntomas y pedir ayuda médica.',
+          prerequisitos: ['unidad_9_leccion_1'],
+        ),
+      ],
+    ),
   ];
 }
