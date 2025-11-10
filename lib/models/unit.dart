@@ -55,21 +55,4 @@ class Unit {
   @override
   int get hashCode => id.hashCode;
 
-  Unit copyWith({
-    String? id,
-    String? nombre,
-    String? descripcion,
-    List<Lesson>? lecciones,
-    int? orden,
-    bool? bloqueada,
-  }) {
-    return Unit(
-      id: id ?? this.id,
-      nombre: nombre ?? this.nombre,
-      descripcion: descripcion ?? this.descripcion,
-      lecciones: lecciones ?? this.lecciones,
-      orden: orden ?? this.orden,
-      bloqueada: bloqueada ?? this.bloqueada,
-    );
-  }
 }

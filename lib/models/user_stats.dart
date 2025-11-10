@@ -7,7 +7,7 @@ class UserStats {
   final List<dynamic> leccionesCompletadas;
   final int unidadActual;
   final Map<String, int> puntajesLecciones;
-  final int puntosSemanales; // 👈 Nuevo
+  final int puntosSemanales;
   final DateTime? ultimaActualizacionSemana;
 
   UserStats({
@@ -29,7 +29,7 @@ class UserStats {
       leccionesCompletadas: data['leccionesCompletadas'] ?? [],
       unidadActual: data['unidadActual'] ?? 1,
       puntajesLecciones: Map<String, int>.from(data['puntajesLecciones'] ?? {}),
-      puntosSemanales: data['puntosSemanales'] ?? 0, // ✅ lee Firestore
+      puntosSemanales: data['puntosSemanales'] ?? 0,
       ultimaActualizacionSemana: data['ultimaActualizacionSemana'] != null
           ? (data['ultimaActualizacionSemana'] as Timestamp).toDate()
           : null,

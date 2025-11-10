@@ -5,11 +5,11 @@ class RankingService {
   static final _db = FirebaseFirestore.instance;
   static final _auth = FirebaseAuth.instance;
 
-  // 🌍 Ranking global (usa puntaje total acumulado)
+  // Ranking global semanal
   static Future<List<Map<String, dynamic>>> getGlobalRanking() async {
     final snapshot = await _db
         .collection('users')
-        .orderBy('puntos', descending: true)
+        .orderBy('puntosSemanales', descending: true)
         .limit(30)
         .get();
 
@@ -20,7 +20,7 @@ class RankingService {
     }).toList();
   }
 
-  // 👥 Ranking entre amigos (usa puntaje semanal)
+  // Ranking entre amigos (usa puntaje semanal)
   static Future<List<Map<String, dynamic>>> getFriendsRanking() async {
     final uid = _auth.currentUser?.uid;
     if (uid == null) return [];

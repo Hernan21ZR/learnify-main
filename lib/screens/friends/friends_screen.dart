@@ -18,7 +18,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
   List<Map<String, dynamic>> _friends = [];
   List<Map<String, dynamic>> _searchResults = [];
   bool _isSearching = false;
-  bool _isRefreshing = false; // 👈 Nuevo
+  bool _isRefreshing = false;
   final Set<String> _seguidores = {};
 
   @override
@@ -127,7 +127,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
                 ),
                 const SizedBox(height: 12),
 
-                // 🔍 Resultados de búsqueda
+                // Resultados de búsqueda
                 if (_isSearching)
                   const Center(
                     child: Padding(

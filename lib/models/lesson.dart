@@ -33,21 +33,4 @@ class Lesson {
       'prerequisitos': prerequisitos ?? [],
     };
   }
-
-  Lesson copyWith({
-    String? id,
-    String? titulo,
-    int? orden,
-    String? descripcion,
-    List<String>? prerequisitos,
-    bool? completada,
-  }) {
-    return Lesson(
-      id: id ?? this.id,
-      titulo: titulo ?? this.titulo,
-      orden: orden ?? this.orden,
-      descripcion: descripcion ?? this.descripcion,
-      prerequisitos: prerequisitos ?? this.prerequisitos,
-    );
-  }
 }

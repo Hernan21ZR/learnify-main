@@ -2,7 +2,7 @@ import '../models/question.dart';
 
 class QuestionsSeed {
   static Map<String, List<Question>> get preguntasPorLeccion => {
-    // 🟩 Unidad 1: Fundamentos
+    // Unidad 1: Fundamentos
     'unidad_1_leccion_1': [
       Question(
         id: 'q1',
@@ -69,7 +69,7 @@ class QuestionsSeed {
       ),
     ],
 
-    // 🟨 Unidad 2: Gramática básica
+    // Unidad 2: Gramática básica
     'unidad_2_leccion_1': [
       Question(
         id: 'q1',
@@ -146,7 +146,7 @@ class QuestionsSeed {
       ),
     ],
 
-    // 🟦 Unidad 3: Conversación básica
+    // Unidad 3: Conversación básica
     'unidad_3_leccion_1': [
       Question(
         id: 'q1',
@@ -218,7 +218,7 @@ class QuestionsSeed {
       ),
     ],
 
-    // 🟥 Unidad 4: Vocabulario diario
+    // Unidad 4: Vocabulario diario
     'unidad_4_leccion_1': [
       Question(
         id: 'q1',
@@ -357,7 +357,7 @@ class QuestionsSeed {
       ),
     ],
 
-    // 🟫 Unidad 6: El tiempo y el clima
+    // Unidad 6: El tiempo y el clima
     'unidad_6_leccion_1': [
       Question(
         id: 'q1',
@@ -424,7 +424,7 @@ class QuestionsSeed {
       ),
     ],
 
-    // 🟪 Unidad 7: Viajes y transporte
+    // Unidad 7: Viajes y transporte
     'unidad_7_leccion_1': [
       Question(
         id: 'q1',
@@ -491,7 +491,7 @@ class QuestionsSeed {
       ),
     ],
 
-    // 🟦 Unidad 8: Compras y dinero
+    // Unidad 8: Compras y dinero
     'unidad_8_leccion_1': [
       Question(
         id: 'q1',
@@ -558,7 +558,7 @@ class QuestionsSeed {
       ),
     ],
 
-    // 🟩 Unidad 9: Salud y cuerpo
+    // Unidad 9: Salud y cuerpo
     'unidad_9_leccion_1': [
       Question(
         id: 'q1',

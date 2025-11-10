@@ -49,7 +49,7 @@ class _RankingScreenState extends State<RankingScreen>
           indicatorColor: Colors.white,
           tabs: const [
             Tab(text: "Amigos (Semanal)"),
-            Tab(text: "Global (Total)"),
+            Tab(text: "Global (Semanal)"),
           ],
         ),
       ),
@@ -62,7 +62,7 @@ class _RankingScreenState extends State<RankingScreen>
               children: [
                 _buildRankingList(
                   _friends,
-                  "Tus amigos no tienen puntos aún 😅",
+                  "Tus amigos no tienen puntos aún",
                   isGlobal: false,
                 ),
                 _buildRankingList(
@@ -99,7 +99,7 @@ class _RankingScreenState extends State<RankingScreen>
           final user = data[index];
           final nombre = "${user['nombre']} ${user['apellidos'] ?? ''}";
           final puntos = isGlobal
-              ? (user['puntos'] ?? 0)
+              ? (user['puntosSemanales'] ?? 0)
               : (user['puntosSemanales'] ?? 0);
           final isCurrentUser = user['id'] == _currentUserId;
 
@@ -138,7 +138,7 @@ class _RankingScreenState extends State<RankingScreen>
               ),
               subtitle: Text(
                 isGlobal
-                    ? "Puntaje global: $puntos"
+                    ? "Puntaje semanal: $puntos"
                     : "Puntaje semanal: $puntos",
                 style: TextStyle(
                   color:
